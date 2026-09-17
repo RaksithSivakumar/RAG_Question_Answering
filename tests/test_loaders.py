@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 import pytest
 
 from app.loaders import DocumentLoadError, extract_text_from_bytes, extract_text_from_path, validate_filename

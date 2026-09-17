@@ -133,10 +133,11 @@ def answer_question(
     top_k: int = DEFAULT_TOP_K,
     store: FaissVectorStore | None = None,
     threshold: float = RELEVANCE_THRESHOLD,
-    generate_fn=generate_grounded_answer,
+    generate_fn=None,
 ) -> QueryResult:
     started = time.perf_counter()
     retrieved = retrieve_relevant_chunks(question, top_k=top_k, store=store, threshold=threshold)
+    generator = generate_fn or generate_grounded_answer
 
     if retrieved.insufficient_evidence:
         total_ms = (time.perf_counter() - started) * 1000
@@ -155,7 +156,7 @@ def answer_question(
             total_latency_ms=total_ms,
         )
 
-    answer, llm_latency_ms = generate_fn(question, retrieved.hits)
+    answer, llm_latency_ms = generator(question, retrieved.hits)
     total_ms = (time.perf_counter() - started) * 1000
     logger.info(
         "query latencies ms: embedding=%.1f retrieval=%.1f llm=%.1f total=%.1f",
