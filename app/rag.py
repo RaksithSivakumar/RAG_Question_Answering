@@ -114,6 +114,14 @@ def retrieve_relevant_chunks(
 
     filtered = [hit for hit in raw_hits if hit.score >= threshold]
     insufficient = len(filtered) == 0
+    logger.info(
+        "embedding latency=%.1f ms; retrieval latency=%.1f ms; kept=%s/%s (threshold=%.2f)",
+        embedding_latency_ms,
+        retrieval_latency_ms,
+        len(filtered),
+        len(raw_hits),
+        threshold,
+    )
     if insufficient:
         logger.info(
             "Insufficient evidence for question (raw_hits=%s, threshold=%.2f)",
