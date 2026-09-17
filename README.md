@@ -208,10 +208,12 @@ Recorded 17 Sep 2026 on this development machine. Not a published benchmark. Fir
 
 | Scenario | `latency_ms` (API) | Notes |
 | --- | --- | --- |
-| Known question after upload | 3423.8 | Includes Gemini (~3.1 s in a prior script) |
-| Unknown / out-of-document question | 18.8 | LLM skipped; sources `[]` |
+| Known question after TXT upload (M7 session) | 3423.8 | Gemini on; 1 source, score 0.768 |
+| Known question after PDF + TXT upload (M10) | 4331.4 | 3 source hits (index accumulates uploads) |
+| Unknown / out-of-document question (M7) | 18.8 | LLM skipped; sources `[]` |
+| Unknown / out-of-document question (M10) | 20.1 | LLM skipped; sources `[]` |
 
-Add further runs below after your own hardware tests.
+Final verification (17 Sep 2026): `pip check` reported no broken requirements; FastAPI accepted a generated PDF and the sample TXT; the annual-leave question returned 20 days with source chunks and `latency_ms`; the maternity-leave question returned the insufficient-information message; pytest **37 passed**; `.env` and FAISS files were not tracked by git.
 
 ## Testing
 
