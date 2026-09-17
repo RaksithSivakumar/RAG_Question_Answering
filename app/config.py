@@ -1,6 +1,11 @@
 """Shared configuration constants for the RAG pipeline."""
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -29,3 +34,8 @@ INSUFFICIENT_EVIDENCE_MESSAGE = (
 )
 
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
+
+# Gemini (never log the API key)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash").strip() or "gemini-3.6-flash"
+GEMINI_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))

@@ -14,6 +14,7 @@ from app.config import (
     RELEVANCE_THRESHOLD,
 )
 from app.embeddings import embed_query, embed_texts, embedding_dimension
+from app.llm import generate_grounded_answer
 from app.loaders import extract_text_from_bytes
 from app.vector_store import ChunkMetadata, FaissVectorStore, SearchHit
 
@@ -41,6 +42,16 @@ class RetrievalResult:
         if self.insufficient_evidence:
             return INSUFFICIENT_EVIDENCE_MESSAGE
         return None
+
+
+@dataclass
+class QueryResult:
+    answer: str
+    sources: list[SearchHit]
+    embedding_latency_ms: float
+    retrieval_latency_ms: float
+    llm_latency_ms: float
+    total_latency_ms: float
 
 
 def get_vector_store() -> FaissVectorStore:
@@ -114,4 +125,50 @@ def retrieve_relevant_chunks(
         insufficient_evidence=insufficient,
         embedding_latency_ms=embedding_latency_ms,
         retrieval_latency_ms=retrieval_latency_ms,
+    )
+
+
+def answer_question(
+    question: str,
+    top_k: int = DEFAULT_TOP_K,
+    store: FaissVectorStore | None = None,
+    threshold: float = RELEVANCE_THRESHOLD,
+    generate_fn=generate_grounded_answer,
+) -> QueryResult:
+    started = time.perf_counter()
+    retrieved = retrieve_relevant_chunks(question, top_k=top_k, store=store, threshold=threshold)
+
+    if retrieved.insufficient_evidence:
+        total_ms = (time.perf_counter() - started) * 1000
+        logger.info(
+            "query latencies ms: embedding=%.1f retrieval=%.1f llm=0.0 total=%.1f (no LLM call)",
+            retrieved.embedding_latency_ms,
+            retrieved.retrieval_latency_ms,
+            total_ms,
+        )
+        return QueryResult(
+            answer=INSUFFICIENT_EVIDENCE_MESSAGE,
+            sources=[],
+            embedding_latency_ms=retrieved.embedding_latency_ms,
+            retrieval_latency_ms=retrieved.retrieval_latency_ms,
+            llm_latency_ms=0.0,
+            total_latency_ms=total_ms,
+        )
+
+    answer, llm_latency_ms = generate_fn(question, retrieved.hits)
+    total_ms = (time.perf_counter() - started) * 1000
+    logger.info(
+        "query latencies ms: embedding=%.1f retrieval=%.1f llm=%.1f total=%.1f",
+        retrieved.embedding_latency_ms,
+        retrieved.retrieval_latency_ms,
+        llm_latency_ms,
+        total_ms,
+    )
+    return QueryResult(
+        answer=answer,
+        sources=retrieved.hits,
+        embedding_latency_ms=retrieved.embedding_latency_ms,
+        retrieval_latency_ms=retrieved.retrieval_latency_ms,
+        llm_latency_ms=llm_latency_ms,
+        total_latency_ms=total_ms,
     )
