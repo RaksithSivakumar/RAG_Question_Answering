@@ -1,0 +1,5 @@
+Employees receive 20 days of annual leave per calendar year.
+
+Employees must submit leave requests at least 3 working days before the requested leave date.
+
+Remote work is allowed on Tuesday and Thursday.
